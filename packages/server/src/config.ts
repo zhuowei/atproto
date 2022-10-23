@@ -105,7 +105,9 @@ export class ServerConfig {
   }
 
   get origin() {
-    const u = new URL(`${this.scheme}://${this.hostname}:${this.port}`)
+    // const u = new URL(`${this.scheme}://${this.hostname}:${this.port}`)
+    // zhuowei: patch out the port
+    const u = new URL(`${this.scheme}://${this.hostname}`)
     return u.origin
   }
 
