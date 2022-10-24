@@ -43,9 +43,23 @@ const run = async () => {
     await db.createTables();
   }
 
-  const keypair = await crypto.EcdsaKeypair.create()
+  const keypairPath = process.env.KEYPAIR_PATH;
+  let keypair:crypto.EcdsaKeypair|null = null;
+  if (keypairPath) {
+    try {
+      keypair = await crypto.EcdsaKeypair.import(JSON.parse(fs.readFileSync(keypairPath, {encoding: 'utf8'})));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  if (!keypair) {
+    keypair = await crypto.EcdsaKeypair.create({exportable: true})
+    if (keypairPath) {
+      fs.writeFileSync(keypairPath, JSON.stringify(await keypair!.export()), {encoding: 'utf8'});
+    }
+  }
 
-  const { listener } = server(blockstore, db, keypair, cfg)
+  const { listener } = server(blockstore, db, keypair!, cfg)
   listener.on('listening', () => {
     console.log(`🌞 ATP Data server is running at ${cfg.origin}`)
   })
