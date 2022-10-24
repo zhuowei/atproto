@@ -222,6 +222,23 @@ export class Database {
     return found.did
   }
 
+  async insertRemoteUser(
+    username: string,
+    did: string,
+  ) {
+    log.debug({ username, did }, 'registering remote user')
+    const user = {
+      email: '',
+      username: username,
+      did: did,
+      password: '',
+      createdAt: new Date().toISOString(),
+      lastSeenNotifs: new Date().toISOString(),
+    }
+    await this.db.insertInto('user').values(user).execute()
+    log.info({ username, did }, 'registered remote user')
+  }
+
   validateRecord(collection: string, obj: unknown): ValidationResult {
     let table
     try {

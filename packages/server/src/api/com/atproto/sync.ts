@@ -4,6 +4,18 @@ import { def as common } from '@atproto/common'
 import * as locals from '../../../locals'
 import { DataDiff, Repo } from '@atproto/repo'
 import * as repoDiff from '../../../repo-diff'
+import * as didResolver from '@atproto/did-resolver'
+
+async function getUsernameFromDidNetwork(auth, userDid) {
+    let didDoc
+    try {
+      didDoc = await auth.didResolver.ensureResolveDid(userDid)
+    } catch (err) {
+      throw new InvalidRequestError(`Could not resolve DID: ${err}`)
+    }
+
+    return didResolver.getUsername(didDoc);
+}
 
 export default function (server: Server) {
   server.com.atproto.syncGetRoot(async (params, _in, _req, res) => {
@@ -42,14 +54,13 @@ export default function (server: Server) {
     // @TODO add something back here. new route for repos not on server?
 
     // check to see if we have their username in DB, for indexed queries
-    // const haveUsername = await db.isDidRegistered(did)
-    // if (!haveUsername) {
-    //   const username = await service.getUsernameFromDidNetwork(did)
-    //   if (username) {
-    //     const [name, host] = username.split('@')
-    //     await db.registerDid(name, did, host)
-    //   }
-    // }
+    const haveUsername = (await db.getUser(did)) != null;
+    if (!haveUsername) {
+      let username = await getUsernameFromDidNetwork(locals.auth(res), did)
+      if (username) {
+        await db.insertRemoteUser(username, did)
+      }
+    }
 
     const maybeRepo = await locals.loadRepo(res, did)
     const isNewRepo = maybeRepo === null
