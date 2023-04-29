@@ -9,7 +9,10 @@ export const resolveDns = async (handle: string): Promise<string> => {
   try {
     chunkedResults = await dns.resolveTxt(`${SUBDOMAIN}.${handle}`)
   } catch (err) {
-    if (isErrnoException(err) && err.code === 'ENOTFOUND') {
+    if (
+      isErrnoException(err) &&
+      (err.code === 'ENOTFOUND' || err.code === 'ENODATA')
+    ) {
       throw new NoHandleRecordError(handle)
     }
     throw err
