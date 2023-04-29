@@ -3,11 +3,12 @@ import PQueue from 'p-queue'
 // A queue with arbitrarily many partitions, each processing work sequentially.
 // Partitions are created lazily and taken out of memory when they go idle.
 export class PartitionedQueue {
-  main = new PQueue({ concurrency: 64 })
+  main = new PQueue({ concurrency: Infinity })
   partitions = new Map<string, PQueue>()
 
   async add(partitionId: string, task: () => Promise<void>) {
     if (this.main.isPaused) return
+    await this.main.onSizeLessThan(1024);
     return this.main.add(() => {
       return this.getPartition(partitionId).add(task)
     })
