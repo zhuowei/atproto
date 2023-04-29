@@ -41,6 +41,7 @@ export class RepoSubscription {
       try {
         const { ran } = await this.leader.run(async ({ signal }) => {
           const sub = this.getSubscription({ signal })
+          const awaiter: Promise<void>[] = [];
           for await (const msg of sub) {
             const details = getMessageDetails(msg)
             if ('info' in details) {
@@ -54,7 +55,7 @@ export class RepoSubscription {
               continue
             }
             const item = this.consecutive.push(details.message)
-            this.repoQueue
+            const queuePromise = this.repoQueue
               .add(details.repo, () => this.handleMessage(details.message))
               .catch((err) => {
                 // We log messages we can't process and move on. Barring a
@@ -81,6 +82,11 @@ export class RepoSubscription {
                     )
                   })
               })
+            awaiter.push(queuePromise);
+            if (awaiter.length > 64) {
+              await Promise.allSettled(awaiter);
+              awaiter.length = 0;
+            }
           }
         })
         if (ran && !this.destroyed) {
