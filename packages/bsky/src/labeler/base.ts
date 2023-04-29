@@ -56,12 +56,12 @@ export abstract class Labeler {
   async labelRecord(uri: AtUri, obj: unknown): Promise<string[]> {
     const { text, imgs } = getFieldsFromRecord(obj)
     const txtLabels = await this.labelText(text.join(' '))
-    const imgLabels = await Promise.all(
+    const imgLabels = []; /*await Promise.all(
       imgs.map(async (cid) => {
         const { stream } = await resolveBlob(uri.host, cid, this.ctx)
         return this.labelImg(stream)
       }),
-    )
+    )*/
     return dedupe([...txtLabels, ...imgLabels.flat()])
   }
 
