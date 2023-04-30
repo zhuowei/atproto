@@ -30,6 +30,7 @@ import getModerationReports from './com/atproto/admin/getModerationReports'
 import resolveHandle from './com/atproto/identity/resolveHandle'
 
 export * as health from './health'
+export * as forcePull from './force-pull'
 
 export * as blobResolver from './blob-resolver'
 
