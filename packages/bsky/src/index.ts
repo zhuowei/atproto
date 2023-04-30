@@ -34,15 +34,18 @@ export class BskyAppView {
   public sub?: RepoSubscription
   public server?: http.Server
   private terminator?: HttpTerminator
+  public extraSubs: RepoSubscription[]
 
   constructor(opts: {
     ctx: AppContext
     app: express.Application
     sub?: RepoSubscription
+    extraSubs?: RepoSubscription[]
   }) {
     this.ctx = opts.ctx
     this.app = opts.app
     this.sub = opts.sub
+    this.extraSubs = opts.extraSubs || []
   }
 
   static create(opts: {
@@ -143,7 +146,10 @@ export class BskyAppView {
       ? new RepoSubscription(ctx, config.repoProvider, config.repoSubLockId)
       : undefined
 
-    return new BskyAppView({ ctx, app, sub })
+    const extraSubUrls = (process.env.EXTRA_SUBS || "").split(",");
+    const extraSubs = extraSubUrls.map((v, i) => new RepoSubscription(ctx, v, (config.repoSubLockId || 1000) + 1 + i));
+
+    return new BskyAppView({ ctx, app, sub, extraSubs })
   }
 
   async start(): Promise<http.Server> {
@@ -154,6 +160,9 @@ export class BskyAppView {
     const { port } = server.address() as AddressInfo
     this.ctx.cfg.assignPort(port)
     this.sub?.run() // Don't await, backgrounded
+    for (const extraSub of this.extraSubs) {
+      extraSub.run() // Don't await, backgrounded
+    }
     return server
   }
 
