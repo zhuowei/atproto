@@ -5,7 +5,7 @@ import events from 'events'
 import { createHttpTerminator, HttpTerminator } from 'http-terminator'
 import cors from 'cors'
 import { DidResolver } from '@atproto/did-resolver'
-import API, { health, blobResolver } from './api'
+import API, { health, blobResolver, forcePull } from './api'
 import Database from './db'
 import * as error from './error'
 import { loggerMiddleware } from './logger'
@@ -141,6 +141,7 @@ export class BskyAppView {
     }
     app.use(server.xrpc.router)
     app.use(error.handler)
+    app.use(forcePull.createRouter(ctx));
 
     const sub = config.repoProvider
       ? new RepoSubscription(ctx, config.repoProvider, config.repoSubLockId)
