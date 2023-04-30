@@ -54,7 +54,8 @@ export class RepoSubscription {
               continue
             }
             const item = this.consecutive.push(details.message)
-            this.repoQueue
+            // TODO(zhuowei): hack
+            await this.repoQueue
               .add(details.repo, () => this.handleMessage(details.message))
               .catch((err) => {
                 // We log messages we can't process and move on. Barring a
