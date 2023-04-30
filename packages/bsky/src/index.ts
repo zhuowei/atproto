@@ -147,7 +147,7 @@ export class BskyAppView {
       ? new RepoSubscription(ctx, config.repoProvider, config.repoSubLockId)
       : undefined
 
-    const extraSubUrls = process.env.EXTRA_SUBS? process.env.EXTRA_SUBS.split(","): "";
+    const extraSubUrls = process.env.EXTRA_SUBS? process.env.EXTRA_SUBS.split(","): [];
     const extraSubs = extraSubUrls.map((v, i) => new RepoSubscription(ctx, v, (config.repoSubLockId || 1000) + 1 + i));
 
     return new BskyAppView({ ctx, app, sub, extraSubs })
