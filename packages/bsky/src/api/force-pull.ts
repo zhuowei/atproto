@@ -14,5 +14,14 @@ export const createRouter = (ctx: AppContext): express.Router => {
     res.send({});
   })
 
+  router.post('/fetchProfile/:repo', async function (req, res) {
+    const {repo} = req.params;
+    await ctx.db.transaction(async (tx) => {
+      const indexingTx = ctx.services.indexing(tx);
+      await indexingTx.indexHandle(repo, new Date().toISOString());
+    });
+    res.send({});
+  })
+
   return router;
 }
