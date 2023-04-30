@@ -6,6 +6,18 @@ import {
   getUserSearchQuery,
   SearchKeyset,
 } from '../../../../services/util/search'
+import { resolveExternalHandle } from '../../../../util/identity'
+
+async function fetchProfileMaybe(ctx: AppContext, handle: string) {
+  const resolved = await resolveExternalHandle(handle);
+  if (!resolved) {
+    return;
+  }
+  await ctx.db.transaction(async (tx) => {
+    const indexingTx = ctx.services.indexing(tx);
+    await indexingTx.indexHandle(resolved, new Date().toISOString());
+  });
+}
 
 export default function (server: Server, ctx: AppContext) {
   server.app.bsky.actor.searchActors({
@@ -15,6 +27,12 @@ export default function (server: Server, ctx: AppContext) {
       const { cursor, limit, term: rawTerm } = params
       const requester = auth.credentials.did
       const term = cleanTerm(rawTerm || '')
+
+      // TODO(zhuowei): hack
+      if (term.length > 0 && term.charAt(0) == "@" && term.indexOf(" ") === -1) {
+        console.log("fetching profile on search");
+        await fetchProfileMaybe(ctx, term.substring(1));
+      }
 
       const results = term
         ? await getUserSearchQuery(db, { term, limit, cursor })

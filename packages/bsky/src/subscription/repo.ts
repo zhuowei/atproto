@@ -29,6 +29,7 @@ export class RepoSubscription {
   cursorQueue = new LatestQueue()
   consecutive = new ConsecutiveList<ProcessableMessage>()
   destroyed = false
+  ignoringIrrelevant = process.env.IGNORE_IRRELEVANT && process.env.IGNORE_IRRELEVANT.indexOf(this.service) !== -1;
 
   constructor(
     public ctx: AppContext,
@@ -129,6 +130,15 @@ export class RepoSubscription {
     }
   }
 
+  private async isUserKnownToThisServer(did: string) {
+    const actor = await this.ctx.db.db
+      .selectFrom('actor')
+      .where('did', '=', did)
+      .selectAll()
+      .executeTakeFirst()
+    return Boolean(actor);
+  }
+
   private async handleCommit(msg: message.Commit) {
     const { db, services } = this.ctx
     const { root, rootCid, ops } = await getOps(msg)
@@ -157,6 +167,10 @@ export class RepoSubscription {
       }
     }
     await db.transaction(async (tx) => {
+      // TODO(zhuowei): HACK
+      if (this.ignoringIrrelevant && !(await this.isUserKnownToThisServer(msg.repo))) {
+        return;
+      }
       const indexingTx = services.indexing(tx)
       await Promise.all([
         indexRecords(indexingTx),
@@ -169,6 +183,10 @@ export class RepoSubscription {
   private async handleUpdateHandle(msg: message.Handle) {
     const { db, services } = this.ctx
     await db.transaction(async (tx) => {
+      // TODO(zhuowei): HACK
+      if (this.ignoringIrrelevant && !(await this.isUserKnownToThisServer(msg.did))) {
+        return;
+      }
       const indexingTx = services.indexing(tx)
       await indexingTx.indexHandle(msg.did, msg.time, true)
     })
@@ -177,6 +195,10 @@ export class RepoSubscription {
   private async handleTombstone(msg: message.Tombstone) {
     const { db, services } = this.ctx
     await db.transaction(async (tx) => {
+      // TODO(zhuowei): HACK
+      if (this.ignoringIrrelevant && !(await this.isUserKnownToThisServer(msg.did))) {
+        return;
+      }
       const indexingTx = services.indexing(tx)
       await indexingTx.tombstoneActor(msg.did)
     })
