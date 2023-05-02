@@ -8,8 +8,11 @@ export const createRouter = (ctx: AppContext): express.Router => {
     const {repo, commit} = req.params;
     await ctx.db.transaction(async (tx) => {
       const indexingTx = ctx.services.indexing(tx);
-      await indexingTx.indexRepo(repo, commit);
+      const { root, commit: commitObj } = await indexingTx.indexRepo(repo, commit);
       await indexingTx.indexHandle(repo, new Date().toISOString());
+      await indexingTx.setCommitLastSeen(commitObj,
+        {commit: root, rebase: false, tooBig: false}
+      );
     });
     res.send({});
   })

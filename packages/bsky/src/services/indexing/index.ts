@@ -154,6 +154,10 @@ export class IndexingService {
       })
       await Promise.all(processChunk)
     }
+    return {
+      root: root,
+      commit: checkout.commitData,
+    };
   }
 
   async setCommitLastSeen(

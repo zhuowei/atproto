@@ -142,6 +142,7 @@ export class RepoSubscription {
   private async handleCommit(msg: message.Commit) {
     const { db, services } = this.ctx
     const { root, rootCid, ops } = await getOps(msg)
+    console.log("handling a commit: ", msg, root, rootCid, ops);
     const indexRecords = async (indexingTx: IndexingService) => {
       if (msg.tooBig) {
         return await indexingTx.indexRepo(msg.repo, rootCid.toString())

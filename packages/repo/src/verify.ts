@@ -7,7 +7,7 @@ import Repo from './repo'
 import CidSet from './cid-set'
 import * as util from './util'
 import { RecordClaim, RepoContents, RepoContentsWithCids } from './types'
-import { def } from './types'
+import { def, Commit } from './types'
 import { MST } from './mst'
 import { cidForCbor } from '@atproto/common'
 
@@ -18,6 +18,7 @@ export type VerifiedCheckout = {
 
 export type VerifiedCheckoutWithCids = {
   commit: CID
+  commitData: Commit
   contents: RepoContentsWithCids
 }
 
@@ -68,6 +69,7 @@ export const verifyCheckoutWithCids = async (
 
   return {
     commit: repo.cid,
+    commitData: repo.commit,
     contents,
   }
 }
